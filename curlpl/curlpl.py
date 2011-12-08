@@ -16,8 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import requests # currently depends on requests library.  eventually curl?
-from requests.exceptions import RequestException
+try:
+    import requests # currently depends on requests library.  eventually curl?
+    from requests.exceptions import RequestException
+except ImportError:
+    print "You must install the requests library to use curlpl."
+    print "http://docs.python-requests.org/en/latest/user/install/#install"
+    exit(0)
 import cmd
 
 '''This is the name of the session the user begins with.'''
