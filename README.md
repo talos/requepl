@@ -4,7 +4,7 @@ http repl with multiple sessions
 
 ### usage
 
-    $ curlpl/curlpl.py
+    $ curlpl
     In session `default`.
 
 Help:
