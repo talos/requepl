@@ -4,7 +4,7 @@ http repl with multiple sessions
 
 ### usage
 
-    $ curlpl
+    $ ./curlpl
     In session `default`.
 
 Help:
@@ -13,26 +13,29 @@ Help:
 
     Documented commands (type help <topic>):
     ========================================
-    clear  cookies  delete  exit  get  head  post  put  quit  session  sessions
+    clear    delete  head  put              response_headers  set   
+    content  exit    help  quit             session           status
+    cookies  get     post  request_headers  sessions          unset 
 
 Requests:
 
-    curlpl$ get http://www.google.com/
-    curlpl$ post http://www.google.com/
-    curlpl$ put http://www.google.com/
-    curlpl$ delete http://www.google.com/
+    curlpl:default$ get http://www.google.com/
+    curlpl:default$ post http://www.google.com/ [data]
+    curlpl:default$ put http://www.google.com/ [data]
+    curlpl:default$ delete http://www.google.com/ [data]
 
 Show cookies:
 
-    curlpl$ cookies
-    {'PREF': 'ID=a68f101929627f83:FF=0:TM=1323379784:LM=1323379784:S=6WQ0dct7sXgma5Vk', 'NID': '53=NebZVGGxTc0UUNrDn5DcDtXS4IjBD8pbyFVwRBqqxCsi924sLbLcSg72w7i-1gh8fllM13k6lG4OpK7y2BJbka8bUUQ1W--ynYda46HfR1Qy4vfQ91jF4ej_674eP-Fm'}
+    curlpl:default$ cookies
+    { 'NID': '53=pkOV_ZXWlXa_qUM6pf4QeRsUrPdAXQW8Wbgk8KO3iNKTkvUb7M5DAOMsIB0k4Eqeya2Q_vM2hfjFOiAisa8yVpQptw_GAI_mxM7QHe3UeBVgaAsoL3cU3PUH979wRyTC',
+      'PREF': 'ID=ca5f1679b1acda32:FF=0:TM=1323388356:LM=1323388356:S=EUiHGMVX1R5dshxv'}
 
 New session:
 
-    curlpl$ session other
+    curlpl:default$ session other
     In session `other`.
-    curlpl$ cookies
-    {}
+    curlpl:other$ cookies
+    { }
 
 Show available sessions:
 
@@ -44,15 +47,12 @@ Exit:
 
      curlpl$ exit
 
----
-
-### known issues
-
-* no request data
-
----
 
 ### versions
+
+0.0.4 : can set request headers on session-by-session basis
+
+0.0.3 : can request data
 
 0.0.2 : proper executable, docs are there.
 
