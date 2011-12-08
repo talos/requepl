@@ -68,7 +68,6 @@ class Curlpl(cmd.Cmd):
         cmd.Cmd.__init__(self, '\t')
         self.sessions = {}
         self.do_session(DEFAULT_SESSION_NAME)
-        self.prompt = self._prompt
         self.pp = pprint.PrettyPrinter(indent=2)
 
         # Response defaults
@@ -77,7 +76,7 @@ class Curlpl(cmd.Cmd):
         self.content = True
 
     @property
-    def _prompt(self):
+    def prompt(self):
         """Generate prompt with the current session.
         """
         return "curlpl:%s$ " % self.session_name
