@@ -114,7 +114,7 @@ class Curlpl(cmd.Cmd):
         else:
             print "Not showing response status code."
 
-    def do_headers(self, line):
+    def do_response_headers(self, line):
         """Toggle whether response headers are shown after a request.
         "on" to turn them on, "off" to turn them off, blank to read
         the current state.
@@ -151,6 +151,36 @@ class Curlpl(cmd.Cmd):
             print "Showing response content."
         else:
             print "Not showing response content."
+
+    def do_set(self, line):
+        """Set a request header for the current session.  In format
+        [key] [value], where [value] will be encoded.  Displays the
+        headers for this session.
+        """
+        args = line.split(' ')
+        args.reverse()
+        key = args.pop()
+        value = ' '.join(args)
+        if key and value:
+            self.session.headers[key] = value
+        else:
+            print 'You must specify a key and value for the header.'
+        self.do_request_headers('')
+
+    def do_unset(self, line):
+        """Unset a request header for the current session.  Displays
+        the remaining headers for this session.
+        """
+        if(self.session.headers.has_key(line)):
+            self.session.headers.pop(line)
+        else:
+            print "Header '%s' is not set for this session." % line
+        self.do_request_headers('')
+
+    def do_request_headers(self, line):
+        """Display the current request headers for this session.
+        """
+        self.pp.pprint(self.session.headers)
 
     def do_session(self, session_name):
         """Enter a session called `session_name`.  Reenters a session
