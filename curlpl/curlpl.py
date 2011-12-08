@@ -1,4 +1,4 @@
-#/usr/bin/env/python
+#!/usr/bin/env python
 
 # curlpl -- http repl with sessions
 # Copyright (C) 2011  John Krauss
@@ -23,6 +23,7 @@ except ImportError:
     print "You must install the requests library to use curlpl."
     print "http://docs.python-requests.org/en/latest/user/install/#install"
     exit(0)
+from functools import wraps  # wrrapppppidooooooo
 import cmd
 
 '''This is the name of the session the user begins with.'''
@@ -32,6 +33,8 @@ DEFAULT_SESSION_NAME = 'default'
 def safe_request(func):
     """Prevent request error from killing the repl.
     """
+
+    @wraps(func)
     def wrapped(*args):
         try:
             return func(*args)
@@ -83,12 +86,13 @@ class Curlpl(cmd.Cmd):
 
             self.session_name = session_name
 
-        print "In session %s" % self.session_name
+        print "In session `%s`." % self.session_name
 
     def do_sessions(self, line):
         """List the available sessions.
         """
-        print self.sessions
+        for session_name in self.sessions.iterkeys():
+            print session_name
 
     def do_clear(self, line):
         """Clear the current session's state.
@@ -97,7 +101,7 @@ class Curlpl(cmd.Cmd):
                                            # @property instead?
         self.sessions[self.session_name] = self.session
 
-        print "Cleared session %s" % self.session_name
+        print "Cleared session `%s`" % self.session_name
 
     def do_cookies(self, line):
         """Show the cookies for the current session's cookie jar.
@@ -120,6 +124,7 @@ class Curlpl(cmd.Cmd):
     def do_post(self, url):
         """Synchronously post to the specified [url].
         """
+        print url
         self._print_response(self.session.post(url), True, False, True)
 
     @safe_request
@@ -137,17 +142,17 @@ class Curlpl(cmd.Cmd):
     def do_exit(self, line):
         """Exit the repl.
         """
-        return self.do_EOF(line)
+        return True
 
     def do_quit(self, line):
         """Exit the repl.
         """
-        return self.do_EOF(line)
-
-    def do_EOF(self, line):
-        """Exit the repl.
-        """
         return True
+
+    # def do_EOF(self, line):
+    #     """Exit the repl.
+    #     """
+    #     return True
 
 if __name__ == '__main__':
     Curlpl().cmdloop()
