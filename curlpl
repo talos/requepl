@@ -255,6 +255,11 @@ class Curlpl(cmd.Cmd):
         self._print_response(self.session.delete(url,
                                                  data=request_data))
 
+    def help_help(self):
+        """Take `help` off the list of undocumented commands.
+        """
+        self.do_help('')
+
     def do_exit(self, line):
         """Exit Curlpl.
         """
