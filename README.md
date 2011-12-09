@@ -9,7 +9,7 @@ http repl with multiple sessions
 
 Help:
 
-    curlpl$ help
+    curlpl(default)> help
 
     Documented commands (type help <topic>):
     ========================================

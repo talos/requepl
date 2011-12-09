@@ -26,9 +26,40 @@ except ImportError:
 from functools import wraps  # wrrapppppidooooooo
 import cmd
 import pprint
+import readline
 
-'''This is the name of the session the user begins with.'''
-DEFAULT_SESSION_NAME = 'default'
+REQUEST_HEADERS = [
+    'Accept',
+    'Accept-Charset',
+    'Accept-Encoding',
+    'Accept-Language',
+    'Authorization',
+    'Cache-Control',
+    'Connection',
+    'Cookie',
+    'Content-Length',
+    'Content-MD5',
+    'Content-Type',
+    'Date',
+    'Expect',
+    'From',
+    'Host',
+    'If-Match',
+    'If-Modified-Since',
+    'If-None-Match',
+    'If-Range',
+    'If-Unmodified-Since',
+    'Max-Forwards',
+    'Pragma',
+    'Proxy-Authorization',
+    'Range',
+    'Referer',
+    'TE',
+    'Upgrade',
+    'User-Agent',
+    'Via',
+    'Warning']
+
 
 def parse_request_line(line):
     """Parse a request line.
@@ -61,27 +92,62 @@ class Curlpl(cmd.Cmd):
     """Curlpl provides an HTTP repl with switchable sessions.
     """
 
-    def __init__(self):
-        """Initialize Curlpl
-        """
-        #super(Curlpl, self).__init__('\t') # use tab for readline
-        cmd.Cmd.__init__(self, '\t')
-        self.sessions = {}
-        self.do_session(DEFAULT_SESSION_NAME)
-        self.pp = pprint.PrettyPrinter(indent=2)
-        self.intro = "An HTTP repl with switchable sessions. Type `help` for"\
-                     " a list of commands."
+    sessions = {}
+    default_session_name = 'default'
+    pp = pprint.PrettyPrinter(indent=2)
+    intro = "An HTTP repl with switchable sessions. Type `help` for"\
+            " a list of commands."
 
-        # Response defaults
-        self.status_code = True
-        self.headers = False
-        self.content = True
+    # Response defaults
+    status_code = True
+    headers = False
+    content = True
+
+    def preloop(self):
+        """Initialize default session.
+        """
+        # OS X Lion whyyyy
+        if 'libedit' in readline.__doc__:
+            self.completekey = None # disable cmd.Cmd's default
+                                    # complete binding
+            self.old_completer = readline.get_completer()
+            readline.set_completer(self.complete)
+            readline.parse_and_bind("bind ^I rl_complete")
+
+        self.do_session(self.default_session_name)
+
+    def emptyline(self):
+        """Show help on empty line.
+        """
+        self.do_help('help')
+
+    def default(self, line):
+        """Show help on unknown line.
+        """
+        print 'Unrecognized command: "%s"' % line
+        self.do_help('help')
 
     @property
     def prompt(self):
         """Generate prompt with the current session.
         """
         return "curlpl(%s)> " % self.session_name
+
+    def _complete(self, text, options):
+        """Conveniently filter available options against supplied text
+        for autocomplete.
+        """
+        return filter(lambda x: x.find(text) == 0, options)
+
+    def _on_off_complete(self, text):
+        """Completions with on/off.
+        """
+        return self._complete(text, ['on', 'off'])
+
+    def _http_www_complete(self, text):
+        """Completions with [http://[www.]].
+        """
+        return self._complete(text, ['http://', 'http://www.'])
 
     def _print_response(self, response):
         """Print responses from http requests consistently.
@@ -113,9 +179,12 @@ class Curlpl(cmd.Cmd):
             print 'Valid options are `on` and `off`.'
 
         if self.status_code:
-            print "Showing response status code."
+            print "Showing response status code.  `status off` to hide."
         else:
-            print "Not showing response status code."
+            print "Not showing response status code.  `status on` to show."
+
+    def complete_status(self, text, line, begidx, endidx):
+        return self._on_off_complete(text)
 
     def do_response_headers(self, line):
         """
@@ -133,9 +202,12 @@ class Curlpl(cmd.Cmd):
             print 'Valid options are `on` and `off`.'
 
         if self.headers:
-            print "Showing response headers."
+            print "Showing response headers. `response_headers off` to hide."
         else:
-            print "Not showing response headers."
+            print "Not showing response headers.  `response_headers on` to show."
+
+    def complete_response_headers(self, text, line, begidx, endidx):
+        return self._on_off_complete(text)
 
     def do_content(self, line):
         """
@@ -153,19 +225,21 @@ class Curlpl(cmd.Cmd):
             print 'Valid options are `on` and `off`.'
 
         if self.content:
-            print "Showing response content."
+            print "Showing response content.  `content off` to hide."
         else:
-            print "Not showing response content."
+            print "Not showing response content.  `content on` to show."
 
-    def do_set(self, line):
+    def complete_content(self, text, line, begidx, endidx):
+        return self._on_off_complete(text)
+
+    def do_set_header(self, line):
         """
         Set a request header for the current session.  In format
         [key] [value], where [value] will be encoded.  Displays the
         headers for this session.
         """
         args = line.split(' ')
-        args.reverse()
-        key = args.pop()
+        key = args.pop(0)
         value = ' '.join(args)
         if key and value:
             self.session.headers[key] = value
@@ -173,7 +247,12 @@ class Curlpl(cmd.Cmd):
             print 'You must specify a key and value for the header.'
         self.do_request_headers('')
 
-    def do_unset(self, line):
+    def complete_set_header(self, text, line, begidx, endidx):
+        """Provide standard headers for autocomplete.
+        """
+        return self._complete(text, REQUEST_HEADERS)
+
+    def do_unset_header(self, line):
         """
         Unset a request header for the current session.  Displays
         the remaining headers for this session.
@@ -183,6 +262,11 @@ class Curlpl(cmd.Cmd):
         else:
             print "Header '%s' is not set for this session." % line
         self.do_request_headers('')
+
+    def complete_unset_header(self, text, line, begidx, endidx):
+        """Provide existing headers for autocomplete.
+        """
+        return self._complete(text, self.session.headers.keys())
 
     def do_request_headers(self, line):
         """Display the current request headers for this session.
@@ -204,7 +288,10 @@ class Curlpl(cmd.Cmd):
 
             self.session_name = session_name
 
-        #print "In session `%s`." % self.session_name
+    def complete_session(self, text, line, begidx, endidx):
+        """Complete with an available session.
+        """
+        return self._complete(text, self.sessions.keys())
 
     def do_sessions(self, line):
         """
@@ -236,12 +323,18 @@ class Curlpl(cmd.Cmd):
         """
         self._print_response(self.session.head(url))
 
+    def complete_head(self, text, line, begidx, endidx):
+        return self._http_www_complete(text)
+
     @safe_request
     def do_get(self, url, request_data):
         """
         Synchronously get the specified [url]
         """
         self._print_response(self.session.get(url))
+
+    def complete_get(self, text, line, begidx, endidx):
+        return self._http_www_complete(text)
 
     @safe_request
     def do_post(self, url, request_data):
@@ -252,6 +345,9 @@ class Curlpl(cmd.Cmd):
         self._print_response(self.session.post(url,
                                                data=request_data))
 
+    def complete_post(self, text, line, begidx, endidx):
+        return self._http_www_complete(text)
+
     @safe_request
     def do_put(self, url, request_data):
         """
@@ -261,6 +357,9 @@ class Curlpl(cmd.Cmd):
         self._print_response(self.session.put(url,
                                               data=request_data))
 
+    def complete_put(self, text, line, begidx, endidx):
+        return self._http_www_complete(text)
+
     @safe_request
     def do_delete(self, url, request_data):
         """
@@ -269,6 +368,9 @@ class Curlpl(cmd.Cmd):
         """
         self._print_response(self.session.delete(url,
                                                  data=request_data))
+
+    def complete_delete(self, text, line, begidx, endidx):
+        return self._http_www_complete(text)
 
     def help_help(self):
         """Take `help` off the list of undocumented commands.
