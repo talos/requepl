@@ -2,6 +2,8 @@
 
 An HTTP repl with multiple sessions.
 
+Wraps the Python [requests](http://pypi.python.org/pypi/requests) library.
+
 ---
 
 ### installation
