@@ -56,21 +56,26 @@ Wraps the Python [requests](http://pypi.python.org/pypi/requests) library.
 ## Versions
 
 0.0.5 :
+
       - readline working on macosx
       - added a bunch of completions, including http://[www.] and common request headers
       - fixed reverse-argument bug
       - added setup.py install support
 
 0.0.4 :
+
       - can set request headers on session-by-session basis
 
 0.0.3 :
+
       - can request data
 
 0.0.2 :
+
       - proper executable, docs are there.
 
 0.0.1 :
+
       - does put, post, get, delete, and head.
 
 ## License
