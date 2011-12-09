@@ -4,15 +4,11 @@ An HTTP repl with multiple sessions.
 
 Wraps the Python [requests](http://pypi.python.org/pypi/requests) library.
 
----
-
 ## Installation
 
     $ git clone https://talos@github.com/talos/curlpl.git
     $ cd curlpl
     $ python setup.py install
-
----
 
 ## Usage
 
@@ -57,8 +53,6 @@ Wraps the Python [requests](http://pypi.python.org/pypi/requests) library.
 
      curlpl(default)> exit
 
----
-
 ## Versions
 
 0.0.5 :
@@ -78,8 +72,6 @@ Wraps the Python [requests](http://pypi.python.org/pypi/requests) library.
 
 0.0.1 :
       - does put, post, get, delete, and head.
-
----
 
 ## License
 
