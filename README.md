@@ -2,9 +2,13 @@
 
 An HTTP repl with multiple sessions.
 
+---
+
 ### installation
 
     $ python setup.py install
+
+---
 
 ### usage
 
@@ -48,6 +52,8 @@ Show available sessions:
 Exit:
 
      curlpl(default)> exit
+
+---
 
 ### versions
 
