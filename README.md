@@ -55,6 +55,10 @@ Wraps the Python [requests](http://pypi.python.org/pypi/requests) library.
 
 ## Versions
 
+0.0.6 :
+
+      - added host prefix on session-by-session basis
+
 0.0.5 :
 
       - readline working on macosx

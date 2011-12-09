@@ -93,6 +93,7 @@ class Curlpl(cmd.Cmd):
     """
 
     sessions = {}
+    hosts = {}
     default_session_name = 'default'
     pp = pprint.PrettyPrinter(indent=2)
     intro = "An HTTP repl with switchable sessions. Type `help` for"\
@@ -131,7 +132,7 @@ class Curlpl(cmd.Cmd):
     def prompt(self):
         """Generate prompt with the current session.
         """
-        return "curlpl(%s)> " % self.session_name
+        return "curlpl(%s:%s)> " % (self.session_name, self.hosts[self.session_name])
 
     def _complete(self, text, options):
         """Conveniently filter available options against supplied text
@@ -162,6 +163,11 @@ class Curlpl(cmd.Cmd):
         if self.content:
             print "Response content:"
             print response.content
+
+    def _prepend_host(self, url):
+        """Prepend the session host to the supplied url.
+        """
+        return self.hosts[self.session_name] + url
 
     def do_status(self, line):
         """
@@ -285,6 +291,7 @@ class Curlpl(cmd.Cmd):
             else:
                 self.session = requests.session()
                 self.sessions[session_name] = self.session
+                self.hosts[session_name] = ''
 
             self.session_name = session_name
 
@@ -316,12 +323,25 @@ class Curlpl(cmd.Cmd):
         """
         self.pp.pprint(self.session.cookies)
 
+    def do_host(self, line):
+        """
+        Set a host prefix for all requests in this session.  `host`
+        will remove the prefix.
+        """
+        if line.find(' ') != -1:
+            print 'Host cannot be broken with a space.'
+        else:
+            self.hosts[self.session_name] = line
+
+    def complete_host(self, text, line, begidx, endidx):
+        return self._http_www_complete(text)
+
     @safe_request
     def do_head(self, url, request_data):
         """
         Synchronously get the specified [url]
         """
-        self._print_response(self.session.head(url))
+        self._print_response(self.session.head(self._prepend_host(url)))
 
     def complete_head(self, text, line, begidx, endidx):
         return self._http_www_complete(text)
@@ -331,7 +351,7 @@ class Curlpl(cmd.Cmd):
         """
         Synchronously get the specified [url]
         """
-        self._print_response(self.session.get(url))
+        self._print_response(self.session.get(self._prepend_host(url)))
 
     def complete_get(self, text, line, begidx, endidx):
         return self._http_www_complete(text)
@@ -342,7 +362,7 @@ class Curlpl(cmd.Cmd):
         Synchronously post to the specified [url].  Everything after
         is sent as encoded request data.
         """
-        self._print_response(self.session.post(url,
+        self._print_response(self.session.post(self._prepend_host(url),
                                                data=request_data))
 
     def complete_post(self, text, line, begidx, endidx):
@@ -354,7 +374,7 @@ class Curlpl(cmd.Cmd):
         Synchronously put to the specified [url].  Everything after
         is sent as encoded request data.
         """
-        self._print_response(self.session.put(url,
+        self._print_response(self.session.put(self._prepend_host(url),
                                               data=request_data))
 
     def complete_put(self, text, line, begidx, endidx):
@@ -366,7 +386,7 @@ class Curlpl(cmd.Cmd):
         Synchronously delete the specified [url].  Everything after
         is sent as encoded request data.
         """
-        self._print_response(self.session.delete(url,
+        self._print_response(self.session.delete(self._prepend_host(url),
                                                  data=request_data))
 
     def complete_delete(self, text, line, begidx, endidx):
