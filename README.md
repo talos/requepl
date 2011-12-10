@@ -13,47 +13,115 @@ Wraps the Python [requests](http://pypi.python.org/pypi/requests) library.
 ## Usage
 
     $ requepl
+    ***An HTTP repl with multiple sessions. Type `help` for a list of commands.
+    (default)http://>
 
-#### Help:
+#### help
 
-    requepl(default)> help
+    (default)http://> help
 
     Documented commands (type help <topic>):
     ========================================
-    clear    delete  head  put              response_headers  set   
-    content  exit    help  quit             session           status
-    cookies  get     post  request_headers  sessions          unset 
+    clear    delete  head     host  quit             sessions    unset_header
+    content  exit    headers  post  request_headers  set_header
+    cookies  get     help     put   session          status
 
-#### HTTP Requests:
+#### make a request
 
-    requepl(default)> get http://www.google.com/
-    requepl(default)> post http://www.google.com/ [data]
-    requepl(default)> put http://www.google.com/ [data]
-    requepl(default)> delete http://www.google.com/ [data]
+    (default)http://> get google.com
+    http://google.com responded with `status` 200, 10 `headers`, and `content` of length 10344
 
-#### Show cookies:
+#### observe the last response
 
-    requepl(default)> cookies
-    { 'NID': '53=pkOV_ZXWlXa_qUM6pf4QeRsUrPdAXQW8Wbgk8KO3iNKTkvUb7M5DAOMsIB0k4Eqeya2Q_vM2hfjFOiAisa8yVpQptw_GAI_mxM7QHe3UeBVgaAsoL3cU3PUH979wRyTC',
-      'PREF': 'ID=ca5f1679b1acda32:FF=0:TM=1323388356:LM=1323388356:S=EUiHGMVX1R5dshxv'}
+    (default)http://> status
+    200
 
-#### New session:
+    (default)http://> headers
+    { 'cache-control': 'private, max-age=0',
+      'content-type': 'text/html; charset=ISO-8859-1',
+      'date': 'Sat, 10 Dec 2011 20:41:05 GMT',
+      'expires': '-1',
+      'p3p': 'CP="This is not a P3P policy! See http://www.google.com/support/accounts/bin/answer.py?hl=en&answer=151657 for more info."',
+      'server': 'gws',
+      'set-cookie': 'PREF=ID=15cf7e66d12d78c7:FF=0:TM=1323549665:LM=1323549665:S=DvB0IzisaNyEega5; expires=Mon, 09-Dec-2013 20:41:05 GMT; path=/; domain=.google.com, NID=53=TaQ28fcM7zqzvHccGCB2YuQWthS2lL8h2ojtjVuDNOSqpYKrCaUWEAIcHFzBDWx8dLjhhb2j7APh1zItl1fNtyN6I-RVyoW9x9uzRTcLe4OQad1n4sqBELjfcv8qHuCo; expires=Sun, 10-Jun-2012 20:41:05 GMT; path=/; domain=.google.com; HttpOnly',
+      'transfer-encoding': 'chunked',
+      'x-frame-options': 'SAMEORIGIN',
+      'x-xss-protection': '1; mode=block'}
 
-    requepl(default)> session other
-    requepl(other)> cookies
+    (default)http://> content
+    ...
+
+#### observe session state
+
+    (default)http://> cookies
+    { 'NID': '53=TaQ28fcM7zqzvHccGCB2YuQWthS2lL8h2ojtjVuDNOSqpYKrCaUWEAIcHFzBDWx8dLjhhb2j7APh1zItl1fNtyN6I-RVyoW9x9uzRTcLe4OQad1n4sqBELjfcv8qHuCo',
+      'PREF': 'ID=15cf7e66d12d78c7:FF=0:TM=1323549665:LM=1323549665:S=DvB0IzisaNyEega5'}
+
+    (default)http://> request_headers
     { }
 
-#### Show available sessions:
+#### modify session state
 
-     requepl(default)> sessions
-     default
-     other
+    (default)http://> set_header User-Agent Mozilla/5.0 (Windows NT 6.1; WOW64; rv:7.0.1) Gecko/20100101 Firefox/7.0.12011-10-16 20:23:00
+    { 'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:7.0.1) Gecko/20100101 Firefox/7.0.12011-10-16 20:23:00'}
 
-#### Exit:
+    (default)http://> set_header Referer http://www.google.com/
+    { 'Referer': 'http://www.google.com/',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:7.0.1) Gecko/20100101 Firefox/7.0.12011-10-16 20:23:00'}
 
-     requepl(default)> exit
+    (default)http://> unset_header User-Agent
+    { 'Referer': 'http://www.google.com/'}
+
+    (default)http://> request_headers
+    { 'Referer': 'http://www.google.com/'}
+
+    (default)http://> host google.com
+    (default)http://google.com>
+
+    (default)http://google.com> get /
+    http://google.com/ responded with `status` 200, 10 `headers`, and `content` of length 10344
+
+    (default)http://> clear
+    Cleared current session.
+
+#### switch to other sessions
+
+    (default)> session wikipedia en.wikipedia.org
+
+    (wikipedia)http://en.wikipedia.org> get /
+    http://en.wikipedia.org/ responded with `status` 200, 14 `headers`, and `content` of length 54885
+
+    (wikipedia)http://en.wikipedia.org> cookies
+    { }
+
+    (wikipedia)http://en.wikipedia.org> session nytimes nytimes.com
+
+    (nytimes)http://nytimes.com> get /
+    http://nytimes.com/ responded with `status` 200, 9 `headers`, and `content` of length 128667
+
+    (nytimes)http://nytimes.com> cookies
+    { 'RMID': '389d0d8135844ee3c5c18476', 'adxcs': 's*2ace1=0:1|s*2554d=0:1'}
+
+    (nytimes)http://nytimes.com> sessions
+    default
+    wikipedia
+    nytimes
+
+    (nytimes)http://nytimes.com> session wikipedia
+
+    (wikipedia)http://en.wikipedia.org> cookies
+    { }
+
+#### exit
+
+     (default)http://google.com> quit
 
 ## Versions
+
+0.0.8 :
+
+      - better host handling
+      - switched content/head/status from booleans to showing results of last response
 
 0.0.7 :
 

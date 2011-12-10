@@ -24,6 +24,7 @@ except ImportError:
     print "http://docs.python-requests.org/en/latest/user/install/#install"
     exit(0)
 from functools import wraps  # wrrapppppidooooooo
+import urlparse
 import cmd
 import pprint
 import readline
@@ -71,38 +72,44 @@ def parse_request_line(line):
     request_data = ' '.join(args)
     return url, request_data
 
-def safe_request(func):
 
-    """Prevent request error from killing the repl.
+def safe_request(func):
+    """Prevent request error from killing the repl.  Also, add request
+    to history and provide some immediate information about it.
     """
     @wraps(func)
     def wrapped(obj, line):
+        partial, request_data = parse_request_line(line)
+        if urlparse.urlsplit(partial).scheme:
+            url = partial
+        else:
+            url = urlparse.urljoin(obj.hosts[obj.session_name], '//' + partial)
         try:
-            url, request_data = parse_request_line(line)
-            return func(obj, url, request_data)
+            response = func(obj, url, request_data)
+            obj.histories[obj.session_name].append(response)
+            print "%s responded with `status` %s, %s `headers`, and `content` of length %s" \
+                % (url, response.status_code, len(response.headers), len(response.content))
+            #return response
         except RequestException as e:
-            print "Error requesting: %s" % e
+            print "Error requesting url '%s' with data '%s'" % (url, request_data)
         except ValueError as e:
-            print "Error requesting: %s" %e
+            print "Error requesting url '%s' with data '%s'" % (url, request_data)
+        except KeyError as e:
+            print "Invalid scheme for url '%s'" % url
 
     return wrapped
 
-
 class Requepl(cmd.Cmd):
-    """Requepl provides an HTTP repl with switchable sessions.
+    """Requepl provides an HTTP repl with multiple sessions.
     """
 
     sessions = {}
+    histories = {}
     hosts = {}
     default_session_name = 'default'
     pp = pprint.PrettyPrinter(indent=2)
-    intro = "An HTTP repl with switchable sessions. Type `help` for"\
+    intro = "***An HTTP repl with multiple sessions. Type `help` for"\
             " a list of commands."
-
-    # Response defaults
-    status_code = True
-    headers = False
-    content = True
 
     def preloop(self):
         """Initialize default session.
@@ -132,7 +139,25 @@ class Requepl(cmd.Cmd):
     def prompt(self):
         """Generate prompt with the current session.
         """
-        return "requepl(%s:%s)> " % (self.session_name, self.hosts[self.session_name])
+        return "(%s)%s> " % (self.session_name, self.hosts[self.session_name])
+
+    @property
+    def session(self):
+        """Get the current session.
+        """
+        return self.sessions[self.session_name]
+
+    @property
+    def history(self):
+        """Get the current history.
+        """
+        return self.histories[self.session_name]
+
+    @property
+    def host(self):
+        """Get the current host.
+        """
+        return self.hosts[self.session_name]
 
     def _complete(self, text, options):
         """Conveniently filter available options against supplied text
@@ -140,109 +165,49 @@ class Requepl(cmd.Cmd):
         """
         return filter(lambda x: x.find(text) == 0, options)
 
-    def _on_off_complete(self, text):
-        """Completions with on/off.
-        """
-        return self._complete(text, ['on', 'off'])
-
-    def _http_www_complete(self, text):
-        """Completions with [http://[www.]].
-        """
-        return self._complete(text, ['http://', 'http://www.'])
-
-    def _print_response(self, response):
-        """Print responses from http requests consistently.
-        """
-        if self.status_code:
-            print "Response status: %s" % response.status_code
-
-        if self.headers:
-            print "Response headers:"
-            self.pp.pprint(response.headers)
-
-        if self.content:
-            print "Response content:"
-            print response.content
-
-    def _prepend_host(self, url):
-        """Prepend the session host to the supplied url.
-        """
-        return self.hosts[self.session_name] + url
+    # def _http_www_complete(self, text):
+    #     """Completions with [http://[www.]].
+    #     """
+    #     return self._complete(text, ['http://', 'http://www.'])
 
     def do_status(self, line):
         """
-        Toggle whether response status is displayed after a request.
-        `on` to turn them on, `off` to turn them off, blank to read
-        the current state.
+        headers_response
+
+        Show the content of the last request.
         """
-        if line.lower() == 'on':
-            self.status_code = True
-        elif line.lower() == 'off':
-            self.status_code = False
-        elif line == '':
-            pass
+        if len(self.history):
+            print self.history[len(self.history) - 1].status_code
         else:
-            print 'Valid options are `on` and `off`.'
+            print "No requests made in this session yet."
 
-        if self.status_code:
-            print "Showing response status code.  `status off` to hide."
-        else:
-            print "Not showing response status code.  `status on` to show."
-
-    def complete_status(self, text, line, begidx, endidx):
-        return self._on_off_complete(text)
-
-    def do_response_headers(self, line):
+    def do_headers(self, line):
         """
-        Toggle whether response headers are shown after a request.
-        `on` to turn them on, `off` to turn them off, blank to read
-        the current state.
+        headers
+
+        Show response headers from the last request.
         """
-        if line.lower() == 'on':
-            self.headers = True
-        elif line.lower() == 'off':
-            self.headers = False
-        elif line == '':
-            pass
+        if len(self.history):
+            print self.pp.pprint(self.history[len(self.history) - 1].headers)
         else:
-            print 'Valid options are `on` and `off`.'
-
-        if self.headers:
-            print "Showing response headers. `response_headers off` to hide."
-        else:
-            print "Not showing response headers.  `response_headers on` to show."
-
-    def complete_response_headers(self, text, line, begidx, endidx):
-        return self._on_off_complete(text)
+            print "No requests made in this session yet."
 
     def do_content(self, line):
         """
-        Toggle whether response content is shown after a request.
-        `on` to turn them on, `off` to turn them off, blank to read
-        the current state.
+        content
+
+        Show the content of the last request.
         """
-        if line.lower() == 'on':
-            self.content = True
-        elif line.lower() == 'off':
-            self.content = False
-        elif line == '':
-            pass
+        if len(self.history):
+            print self.history[len(self.history) - 1].content
         else:
-            print 'Valid options are `on` and `off`.'
-
-        if self.content:
-            print "Showing response content.  `content off` to hide."
-        else:
-            print "Not showing response content.  `content on` to show."
-
-    def complete_content(self, text, line, begidx, endidx):
-        return self._on_off_complete(text)
+            print "No requests made in this session yet."
 
     def do_set_header(self, line):
         """
-        Set a request header for the current session.  In format
-        [key] [value], where [value] will be encoded.  Displays the
-        headers for this session.
+        set_header <key> <value>
+
+        Set a request header for the current session.  Value will be encoded.
         """
         args = line.split(' ')
         key = args.pop(0)
@@ -260,8 +225,9 @@ class Requepl(cmd.Cmd):
 
     def do_unset_header(self, line):
         """
-        Unset a request header for the current session.  Displays
-        the remaining headers for this session.
+        unset_header <key>
+
+        Unset a request header for the current session.
         """
         if(self.session.headers.has_key(line)):
             self.session.headers.pop(line)
@@ -275,25 +241,32 @@ class Requepl(cmd.Cmd):
         return self._complete(text, self.session.headers.keys())
 
     def do_request_headers(self, line):
-        """Display the current request headers for this session.
+        """
+        Display the current request headers for this session.
         """
         self.pp.pprint(self.session.headers)
 
-    def do_session(self, session_name):
+    def do_session(self, line):
         """
-        Enter a session called [session_name].  Reenters a session
-        if such a session already exists.
-        """
-        if session_name:
-            # Use the existing session if possible.
-            if self.sessions.has_key(session_name):
-                self.session = self.sessions[session_name]
-            else:
-                self.session = requests.session()
-                self.sessions[session_name] = self.session
-                self.hosts[session_name] = ''
+        session <session_name> [host]
 
+        Enters a new or existing session.  Optional [host] to use
+        immediately upon entry.
+        """
+        args = line.split(' ')
+        session_name = args.pop(0)
+        host = ' '.join(args)
+        if session_name:
+            # Create session
             self.session_name = session_name
+            if not self.sessions.has_key(session_name):
+                self.sessions[session_name] = requests.session()
+                self.hosts[session_name] = ''
+                self.histories[session_name] = []
+                self.do_host(host)
+
+        else:
+            self.help_session()
 
     def complete_session(self, text, line, begidx, endidx):
         """Complete with an available session.
@@ -302,6 +275,8 @@ class Requepl(cmd.Cmd):
 
     def do_sessions(self, line):
         """
+        sessions
+
         List the available sessions.
         """
         for session_name in self.sessions.iterkeys():
@@ -309,88 +284,105 @@ class Requepl(cmd.Cmd):
 
     def do_clear(self, line):
         """
-        Clear the current session's state.
-        """
-        self.session = requests.session()  # should this be an
-                                           # @property instead?
-        self.sessions[self.session_name] = self.session
+        clear
 
-        print "Cleared session `%s`" % self.session_name
+        Clear the current session's cookies, headers, host, and history.
+        """
+        self.sessions[self.session_name] = requests.session()
+        self.hosts[self.session_name] = ''
+        self.histories[self.session_name] = []
+
+        print "Cleared current session."
 
     def do_cookies(self, line):
         """
-        Show the cookies for the current session's cookie jar.
+        cookies
+
+        Show the cookies in the current session's cookie jar.
         """
-        self.pp.pprint(self.session.cookies)
+        self.pp.pprint(self.sessions[self.session_name].cookies)
 
     def do_host(self, line):
         """
+        host [<url>]
+
         Set a host prefix for all requests in this session.  `host`
-        will remove the prefix.
+        alone will remove the prefix.
         """
         if line.find(' ') != -1:
             print 'Host cannot be broken with a space.'
         else:
-            self.hosts[self.session_name] = line
+            split = urlparse.urlsplit(line)
 
-    def complete_host(self, text, line, begidx, endidx):
-        return self._http_www_complete(text)
+            if not split.scheme:
+                split = urlparse.urlsplit('//' + line, 'http')
+            self.hosts[self.session_name] = urlparse.urlunsplit(split)
+
+    # def complete_host(self, text, line, begidx, endidx):
+    #     return self._http_www_complete(text)
 
     @safe_request
     def do_head(self, url, request_data):
         """
-        Synchronously get the specified [url]
-        """
-        self._print_response(self.session.head(self._prepend_host(url)))
+        head <url>
 
-    def complete_head(self, text, line, begidx, endidx):
-        return self._http_www_complete(text)
+        Synchronously HEAD url in relation to the session's host.
+        """
+        return self.session.head(url)
+
+    # def complete_head(self, text, line, begidx, endidx):
+    #     return self._http_www_complete(text)
 
     @safe_request
     def do_get(self, url, request_data):
         """
-        Synchronously get the specified [url]
-        """
-        self._print_response(self.session.get(self._prepend_host(url)))
+        get <url>
 
-    def complete_get(self, text, line, begidx, endidx):
-        return self._http_www_complete(text)
+        Synchronously GET url in relation to the session's host.
+        """
+        return self.session.get(url)
+
+    # def complete_get(self, text, line, begidx, endidx):
+    #     return self._http_www_complete(text)
 
     @safe_request
     def do_post(self, url, request_data):
         """
-        Synchronously post to the specified [url].  Everything after
-        is sent as encoded request data.
-        """
-        self._print_response(self.session.post(self._prepend_host(url),
-                                               data=request_data))
+        post <url> [request_data]
 
-    def complete_post(self, text, line, begidx, endidx):
-        return self._http_www_complete(text)
+        Synchronously POST to url in relation to the session's host.
+        Everything after is encoded as request data.
+        """
+        return self.session.post(url, data=request_data)
+
+    # def complete_post(self, text, line, begidx, endidx):
+    #     return self._http_www_complete(text)
 
     @safe_request
     def do_put(self, url, request_data):
         """
-        Synchronously put to the specified [url].  Everything after
-        is sent as encoded request data.
-        """
-        self._print_response(self.session.put(self._prepend_host(url),
-                                              data=request_data))
+        put <url> [request_data]
 
-    def complete_put(self, text, line, begidx, endidx):
-        return self._http_www_complete(text)
+        Synchronously PUT to url in relation to the session's host.
+        Everything after is encoded as request data.
+        """
+        return self.session.put(url, data=request_data)
+
+    # def complete_put(self, text, line, begidx, endidx):
+    #     return self._http_www_complete(text)
 
     @safe_request
     def do_delete(self, url, request_data):
         """
-        Synchronously delete the specified [url].  Everything after
-        is sent as encoded request data.
-        """
-        self._print_response(self.session.delete(self._prepend_host(url),
-                                                 data=request_data))
+        delete <url> [request_data]
 
-    def complete_delete(self, text, line, begidx, endidx):
-        return self._http_www_complete(text)
+        Synchronously PUT to url in relation to the session's host.
+        Everything after is encoded as request data.
+        """
+        return self.session.delete(url, data=request_data)
+
+    # def complete_delete(self, text, line, begidx, endidx):
+    #     return self._http_www_complete(text)
 
     def help_help(self):
         """Take `help` off the list of undocumented commands.
