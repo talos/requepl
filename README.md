@@ -2,14 +2,22 @@
 
 An HTTP repl with multiple sessions.
 
-Wraps the Python [requests](http://pypi.python.org/pypi/requests) library.
+Wraps the Python [Requests](http://pypi.python.org/pypi/requests) library.
 
 ## Installation
+
+From source:
 
 ```bash
     $ git clone https://talos@github.com/talos/requepl.git
     $ cd requepl
     $ python setup.py install
+```
+
+From pypi:
+
+```bash
+    $ pip install requepl
 ```
 
 ## Usage
