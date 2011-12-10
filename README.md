@@ -6,9 +6,11 @@ Wraps the Python [requests](http://pypi.python.org/pypi/requests) library.
 
 ## Installation
 
+```bash
     $ git clone https://talos@github.com/talos/requepl.git
     $ cd requepl
     $ python setup.py install
+```
 
 ## Usage
 
