@@ -32,16 +32,19 @@ Wraps the Python [requests](http://pypi.python.org/pypi/requests) library.
 
 #### make a request
 
+```bash
     (default)http://> get google.com
     http://google.com responded with `status` 200, 10 `headers`, and `content` of length 10344
+```
 
 #### observe the last response
 
-```sh
-(default)http://> status
-200
+```bash
+    (default)http://> status
+    200
 ```
 
+```bash
     (default)http://> headers
     { 'cache-control': 'private, max-age=0',
       'content-type': 'text/html; charset=ISO-8859-1',
@@ -53,9 +56,12 @@ Wraps the Python [requests](http://pypi.python.org/pypi/requests) library.
       'transfer-encoding': 'chunked',
       'x-frame-options': 'SAMEORIGIN',
       'x-xss-protection': '1; mode=block'}
+```
 
+```bash
     (default)http://> content
     ...
+```
 
 #### observe session state
 
