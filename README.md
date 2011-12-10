@@ -33,7 +33,7 @@ Wraps the Python [requests](http://pypi.python.org/pypi/requests) library.
 
 #### observe the last response
 
-```bash
+```sh
 (default)http://> status
 200
 ```
