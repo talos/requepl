@@ -20,6 +20,7 @@ Wraps the Python [requests](http://pypi.python.org/pypi/requests) library.
 
 #### help
 
+```bash
     (default)http://> help
 
     Documented commands (type help <topic>):
@@ -27,6 +28,7 @@ Wraps the Python [requests](http://pypi.python.org/pypi/requests) library.
     clear    delete  head     host  quit             sessions    unset_header
     content  exit    headers  post  request_headers  set_header
     cookies  get     help     put   session          status
+```
 
 #### make a request
 
