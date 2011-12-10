@@ -11,13 +11,13 @@ except ImportError:
     print 'No setuptools.  You may have to manually install dependencies.'
     kw = {}
 
-setup(name='curlpl',
+setup(name='requepl',
       license='GPLv3',
-      version='0.0.4',
+      version='0.0.6',
       description='HTTP REPL with multiple sessions.',
       author='John Krauss',
       author_email='irving.krauss@gmail.com',
-      url='http://github.com/talos/curlpl',
-      scripts=['curlpl'],
+      url='http://github.com/talos/requepl',
+      scripts=['requepl'],
       **kw
       )

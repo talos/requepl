@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# curlpl -- http repl with sessions
+# requepl -- http repl with sessions
 # Copyright (C) 2011  John Krauss
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,7 @@ try:
     import requests # currently depends on requests library.  eventually curl?
     from requests.exceptions import RequestException
 except ImportError:
-    print "You must install the requests library to use curlpl."
+    print "You must install the requests library to use requepl."
     print "http://docs.python-requests.org/en/latest/user/install/#install"
     exit(0)
 from functools import wraps  # wrrapppppidooooooo
@@ -88,8 +88,8 @@ def safe_request(func):
     return wrapped
 
 
-class Curlpl(cmd.Cmd):
-    """Curlpl provides an HTTP repl with switchable sessions.
+class Requepl(cmd.Cmd):
+    """Requepl provides an HTTP repl with switchable sessions.
     """
 
     sessions = {}
@@ -132,7 +132,7 @@ class Curlpl(cmd.Cmd):
     def prompt(self):
         """Generate prompt with the current session.
         """
-        return "curlpl(%s:%s)> " % (self.session_name, self.hosts[self.session_name])
+        return "requepl(%s:%s)> " % (self.session_name, self.hosts[self.session_name])
 
     def _complete(self, text, options):
         """Conveniently filter available options against supplied text
@@ -399,13 +399,13 @@ class Curlpl(cmd.Cmd):
 
     def do_exit(self, line):
         """
-        Exit Curlpl.
+        Exit Requepl.
         """
         return True
 
     def do_quit(self, line):
         """
-        Exit Curlpl.
+        Exit Requepl.
         """
         return True
 
@@ -416,6 +416,6 @@ class Curlpl(cmd.Cmd):
 
 if __name__ == '__main__':
     try:
-        Curlpl().cmdloop()
+        Requepl().cmdloop()
     except KeyboardInterrupt:
         print ''
