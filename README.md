@@ -67,68 +67,108 @@ Wraps the Python [requests](http://pypi.python.org/pypi/requests) library.
 
 #### observe session state
 
+```bash
     (default)http://> cookies
     { 'NID': '53=TaQ28fcM7zqzvHccGCB2YuQWthS2lL8h2ojtjVuDNOSqpYKrCaUWEAIcHFzBDWx8dLjhhb2j7APh1zItl1fNtyN6I-RVyoW9x9uzRTcLe4OQad1n4sqBELjfcv8qHuCo',
       'PREF': 'ID=15cf7e66d12d78c7:FF=0:TM=1323549665:LM=1323549665:S=DvB0IzisaNyEega5'}
+```
 
+```bash
     (default)http://> request_headers
     { }
+```
 
 #### modify session state
 
+```bash
     (default)http://> set_header User-Agent Mozilla/5.0 (Windows NT 6.1; WOW64; rv:7.0.1) Gecko/20100101 Firefox/7.0.12011-10-16 20:23:00
     { 'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:7.0.1) Gecko/20100101 Firefox/7.0.12011-10-16 20:23:00'}
+```
 
+```bash
     (default)http://> set_header Referer http://www.google.com/
     { 'Referer': 'http://www.google.com/',
       'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:7.0.1) Gecko/20100101 Firefox/7.0.12011-10-16 20:23:00'}
+```
 
+```bash
     (default)http://> unset_header User-Agent
     { 'Referer': 'http://www.google.com/'}
+```
 
+```bash
     (default)http://> request_headers
     { 'Referer': 'http://www.google.com/'}
+```
 
+```bash
     (default)http://> host google.com
     (default)http://google.com>
+```
 
+```bash
     (default)http://google.com> get /
     http://google.com/ responded with `status` 200, 10 `headers`, and `content` of length 10344
+```
 
+```bash
     (default)http://> clear
     Cleared current session.
+```
 
 #### switch to other sessions
 
-    (default)> session wikipedia en.wikipedia.org
 
+```bash
+    (default)> session wikipedia en.wikipedia.org
+```
+
+```bash
     (wikipedia)http://en.wikipedia.org> get /
     http://en.wikipedia.org/ responded with `status` 200, 14 `headers`, and `content` of length 54885
+```
 
+```bash
     (wikipedia)http://en.wikipedia.org> cookies
     { }
+```
 
+```bash
     (wikipedia)http://en.wikipedia.org> session nytimes nytimes.com
+```
 
+```bash
     (nytimes)http://nytimes.com> get /
     http://nytimes.com/ responded with `status` 200, 9 `headers`, and `content` of length 128667
+```
 
+```bash
     (nytimes)http://nytimes.com> cookies
     { 'RMID': '389d0d8135844ee3c5c18476', 'adxcs': 's*2ace1=0:1|s*2554d=0:1'}
+```
 
+```bash
     (nytimes)http://nytimes.com> sessions
     default
     wikipedia
     nytimes
+```
 
+```bash
     (nytimes)http://nytimes.com> session wikipedia
+```
 
+```bash
     (wikipedia)http://en.wikipedia.org> cookies
     { }
+```
 
 #### exit
 
+
+```bash
      (default)http://google.com> quit
+```
 
 ## Versions
 
