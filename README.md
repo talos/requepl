@@ -33,8 +33,10 @@ Wraps the Python [requests](http://pypi.python.org/pypi/requests) library.
 
 #### observe the last response
 
-    (default)http://> status
-    200
+```bash
+(default)http://> status
+200
+```
 
     (default)http://> headers
     { 'cache-control': 'private, max-age=0',
