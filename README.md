@@ -12,7 +12,7 @@ Wraps the Python [requests](http://pypi.python.org/pypi/requests) library.
 
 ## Usage
 
-```ruby
+```bash
     $ requepl
     ***An HTTP repl with multiple sessions. Type `help` for a list of commands.
     (default)http://>
