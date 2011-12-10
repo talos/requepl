@@ -108,8 +108,9 @@ From pypi:
 ```
 
 ```bash
-    (default)http://> clear
+    (default)http://google.com> clear
     Cleared current session.
+    (default)http://>
 ```
 
 #### switch to other sessions
@@ -163,7 +164,7 @@ From pypi:
 
 
 ```bash
-     (default)http://google.com> quit
+    (wikipedia)http://en.wikipedia.org> exit
 ```
 
 ## Versions
