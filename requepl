@@ -26,6 +26,8 @@ except ImportError:
 from functools import wraps  # wrrapppppidooooooo
 import urlparse
 import cmd
+import sys
+import ast
 import pprint
 import readline
 
@@ -61,15 +63,26 @@ REQUEST_HEADERS = [
     'Via',
     'Warning']
 
+if len(sys.argv) > 1:
+    DEFAULT_HOST = sys.argv[1]
+else:
+    DEFAULT_HOST = 'localhost'
 
 def parse_request_line(line):
     """Parse a request line.
     Returns url and request_data.
     """
     args = line.split(' ')
-    args.reverse()
-    url = args.pop()
-    request_data = ' '.join(args)
+    url = args.pop(0)
+    raw = ' '.join(args)
+    if raw:
+        try:
+            request_data = ast.literal_eval(raw)
+        except: # the diaper is OK.
+            print "Request data is not a python object, sending as '%s'" % raw
+            request_data = raw
+    else:
+        request_data = raw
     return url, request_data
 
 
@@ -80,10 +93,12 @@ def safe_request(func):
     @wraps(func)
     def wrapped(obj, line):
         partial, request_data = parse_request_line(line)
-        if urlparse.urlsplit(partial).scheme:
-            url = partial
-        else:
-            url = urlparse.urljoin(obj.hosts[obj.session_name], '//' + partial)
+        # if urlparse.urlsplit(partial).scheme:
+        #     url = partial
+        # else:
+        #     url = urlparse.urljoin(obj.hosts[obj.session_name], '//' + partial)
+
+        url = urlparse.urljoin(obj.hosts[obj.session_name], partial)
         try:
             response = func(obj, url, request_data)
             obj.histories[obj.session_name].append(response)
@@ -106,7 +121,7 @@ class Requepl(cmd.Cmd):
     sessions = {}
     histories = {}
     hosts = {}
-    default_session_name = 'default'
+    #default_session_name = 'default'
     pp = pprint.PrettyPrinter(indent=2)
     intro = "***An HTTP repl with multiple sessions. Type `help` for"\
             " a list of commands."
@@ -122,18 +137,18 @@ class Requepl(cmd.Cmd):
             readline.set_completer(self.complete)
             readline.parse_and_bind("bind ^I rl_complete")
 
-        self.do_session(self.default_session_name)
-
-    def emptyline(self):
-        """Show help on empty line.
-        """
-        self.do_help('help')
+        self.do_session(DEFAULT_HOST)
 
     def default(self, line):
         """Show help on unknown line.
         """
         print 'Unrecognized command: "%s"' % line
         self.do_help('help')
+
+    def emptyline(self):
+        """Show nothing on empty line.
+        """
+        pass
 
     @property
     def prompt(self):
@@ -246,27 +261,58 @@ class Requepl(cmd.Cmd):
         """
         self.pp.pprint(self.session.headers)
 
+    def _create_and_enter_session(self, host, name):
+        """ Create a new session for <host> with <name>. Overwrites existing session.
+        """
+        self.session_name = name
+        self.sessions[name] = requests.session()
+        self.hosts[name] = ''
+        self.histories[name] = []
+
+        split = urlparse.urlsplit(host)
+
+        # replace the scheme with http no matter what
+        if split.scheme != 'http' and split.scheme != '':
+            print 'Only HTTP scheme allowed.  Replacing scheme with HTTP.'
+
+        # otherwise urlparse starts with path
+        if split.scheme == '':
+            netloc = split.path
+            path = '/'
+        else:
+            netloc = split.netloc
+            path = split.path
+
+        host = urlparse.urlunsplit((
+            'http', netloc, path, split.query, split.fragment))
+        self.hosts[name] = host
+
     def do_session(self, line):
         """
-        session <session_name> [host]
+        session <host> [name]
+        session <name>
 
-        Enters a new or existing session.  Optional [host] to use
-        immediately upon entry.
+        Enters a new session with <host>, named for the host or with
+        the optional [name].  If [name] already exists, replaces it.
+
+        If only one parameter is specified and it matches an existing
+        name, that session is reentered.
         """
         args = line.split(' ')
-        session_name = args.pop(0)
-        host = ' '.join(args)
-        if session_name:
-            # Create session
-            self.session_name = session_name
-            if not self.sessions.has_key(session_name):
-                self.sessions[session_name] = requests.session()
-                self.hosts[session_name] = ''
-                self.histories[session_name] = []
-                self.do_host(host)
 
-        else:
-            self.help_session()
+        if len(args) is 2: # force enter a new session with specified
+                           # name.  Will overwrite whatever already
+                           # has that name.
+            self._create_and_enter_session(args[0], args[1])
+        elif len(args) is 1 and args[0]: # try to reenter existing session, create otherwise
+            name = args[0]
+            if self.sessions.has_key(name):
+                self.session_name = name
+            else:
+                self._create_and_enter_session(args[0], args[0])
+        else: # fail.
+            print "You should specify only a host and an optional name."
+            self.do_help('session')
 
     def complete_session(self, text, line, begidx, endidx):
         """Complete with an available session.
@@ -282,17 +328,38 @@ class Requepl(cmd.Cmd):
         for session_name in self.sessions.iterkeys():
             print session_name
 
-    def do_clear(self, line):
-        """
-        clear
+    # def do_clear(self, line):
+    #     """
+    #     clear
 
-        Clear the current session's cookies, headers, host, and history.
-        """
-        self.sessions[self.session_name] = requests.session()
-        self.hosts[self.session_name] = ''
-        self.histories[self.session_name] = []
+    #     Clear the current session's cookies, headers, host, and history.
+    #     """
+    #     self.sessions[self.session_name] = requests.session()
+    #     self.hosts[self.session_name] = ''
+    #     self.histories[self.session_name] = []
 
-        print "Cleared current session."
+    #     print "Cleared current session."
+
+    def do_destroy(self, line):
+        """
+        destroy
+
+        Destroy the current session.  Drops into another session if there are
+        more, exits otherwise.
+        """
+
+        self.sessions.pop(self.session_name)
+        self.hosts.pop(self.session_name)
+        self.histories.pop(self.session_name)
+
+        names = self.sessions.keys()
+        if len(names) > 0:
+            self.do_session(names[len(names)-1])
+        else:
+            print "No more sessions, exiting."
+            return True
+            # self.hosts[self.session_name] = ''
+            # return 0
 
     def do_cookies(self, line):
         """
@@ -302,21 +369,21 @@ class Requepl(cmd.Cmd):
         """
         self.pp.pprint(self.sessions[self.session_name].cookies)
 
-    def do_host(self, line):
-        """
-        host [<url>]
+    # def do_host(self, line):
+    #     """
+    #     host [<url>]
 
-        Set a host prefix for all requests in this session.  `host`
-        alone will remove the prefix.
-        """
-        if line.find(' ') != -1:
-            print 'Host cannot be broken with a space.'
-        else:
-            split = urlparse.urlsplit(line)
+    #     Set a host prefix for all requests in this session.  `host`
+    #     alone will remove the prefix.
+    #     """
+    #     if line.find(' ') != -1:
+    #         print 'Host cannot be broken with a space.'
+    #     else:
+    #         split = urlparse.urlsplit(line)
 
-            if not split.scheme:
-                split = urlparse.urlsplit('//' + line, 'http')
-            self.hosts[self.session_name] = urlparse.urlunsplit(split)
+    #         if not split.scheme:
+    #             split = urlparse.urlsplit('//' + line, 'http')
+    #         self.hosts[self.session_name] = urlparse.urlunsplit(split)
 
     # def complete_host(self, text, line, begidx, endidx):
     #     return self._http_www_complete(text)
@@ -351,7 +418,18 @@ class Requepl(cmd.Cmd):
         post <url> [request_data]
 
         Synchronously POST to url in relation to the session's host.
-        Everything after is encoded as request data.
+        If there is [request_data], it is parsed as a Python object
+        and then form encoded.  If it cannot be parsed as a Python
+        object, it is still URL encoded.
+
+        Sending form encoded:
+        post / {"key":"value"}
+
+        Sending JSON:
+        post / '{"key":"value"}'
+
+        Sending arbitrary string:
+        post / 'arbitrary post data'
         """
         return self.session.post(url, data=request_data)
 
@@ -364,7 +442,18 @@ class Requepl(cmd.Cmd):
         put <url> [request_data]
 
         Synchronously PUT to url in relation to the session's host.
-        Everything after is encoded as request data.
+        If there is [request_data], it is parsed as a Python object
+        and then form encoded.  If it cannot be parsed as a Python
+        object, it is still URL encoded.
+
+        Sending form encoded:
+        put / {"key":"value"}
+
+        Sending JSON:
+        put / '{"key":"value"}'
+
+        Sending arbitrary string:
+        put / 'arbitrary post data'
         """
         return self.session.put(url, data=request_data)
 
@@ -376,8 +465,19 @@ class Requepl(cmd.Cmd):
         """
         delete <url> [request_data]
 
-        Synchronously PUT to url in relation to the session's host.
-        Everything after is encoded as request data.
+        Synchronously DELETE url in relation to the session's host.
+        If there is [request_data], it is parsed as a Python object
+        and then form encoded.  If it cannot be parsed as a Python
+        object, it is still URL encoded.
+
+        Sending form encoded:
+        delete / {"key":"value"}
+
+        Sending JSON:
+        delete / '{"key":"value"}'
+
+        Sending arbitrary string:
+        delete / 'arbitrary post data'
         """
         return self.session.delete(url, data=request_data)
 
