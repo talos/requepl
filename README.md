@@ -117,7 +117,7 @@ set an arbitrary request header.  tab is your friend!
 ```bash
     (google.com)http://google.com/> set_header User-Agent Mozilla/5.0 (Windows NT 6.1; WOW64; rv:7.0.1) Gecko/20100101 Firefox/7.0.12011-10-16 20:23:00
     { 'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:7.0.1) Gecko/20100101 Firefox/7.0.12011-10-16 20:23:00'}
-    (google.com)http://google.com/> Referer http://www.google.com/
+    (google.com)http://google.com/> set_header Referer http://www.google.com/
     { 'Referer': 'http://www.google.com/',
       'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:7.0.1) Gecko/20100101 Firefox/7.0.12011-10-16 20:23:00'}
 ```
