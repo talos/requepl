@@ -93,24 +93,34 @@ def safe_request(func):
     @wraps(func)
     def wrapped(obj, line):
         partial, request_data = parse_request_line(line)
-        # if urlparse.urlsplit(partial).scheme:
-        #     url = partial
-        # else:
-        #     url = urlparse.urljoin(obj.hosts[obj.session_name], '//' + partial)
 
         url = urlparse.urljoin(obj.hosts[obj.session_name], partial)
         try:
-            response = func(obj, url, request_data)
-            obj.histories[obj.session_name].append(response)
-            print "%s responded with `status` %s, %s `headers`, and `content` of length %s" \
-                % (url, response.status_code, len(response.headers), len(response.content))
-            #return response
+            while True: # do/while construct for interactive redirects.
+                response = func(obj, url, request_data)
+                obj.histories[obj.session_name].append(response)
+                print "request for '%s' with data '%s' responded with `status` %s, %s `headers`, and `content` of length %s" \
+                    % (url, request_data, response.status_code, len(response.headers), len(response.content))
+                if response.status_code >= 300 and response.status_code < 400:
+                    if response.headers.has_key('location'):
+                        url = response.headers['location']
+                        follow = raw_input("Follow redirect to '%s'? Y/n > " % url)
+                        if len(follow) and (follow[0] == 'n' or follow[1] == 'N'):
+                            break      # break out early
+                    else:
+                        print "No location header from 3xx response, can't follow."
+                        break
+                else:
+                    break # not a redirect
         except RequestException as e:
             print "Error requesting url '%s' with data '%s'" % (url, request_data)
         except ValueError as e:
             print "Error requesting url '%s' with data '%s'" % (url, request_data)
         except KeyError as e:
             print "Invalid scheme for url '%s'" % url
+        except KeyboardInterrupt as e:
+            print ""
+            print "Interrupted request for url '%s' with data '%s'" % (url, request_data)
 
     return wrapped
 
@@ -121,7 +131,6 @@ class Requepl(cmd.Cmd):
     sessions = {}
     histories = {}
     hosts = {}
-    #default_session_name = 'default'
     pp = pprint.PrettyPrinter(indent=2)
     intro = "***An HTTP repl with multiple sessions. Type `help` for"\
             " a list of commands."
@@ -130,7 +139,7 @@ class Requepl(cmd.Cmd):
         """Initialize default session.
         """
         # OS X Lion whyyyy
-        if 'libedit' in readline.__doc__:
+        if 'libedit' in readline.__doc__ or sys.platform == 'darwin':
             self.completekey = None # disable cmd.Cmd's default
                                     # complete binding
             self.old_completer = readline.get_completer()
@@ -394,8 +403,9 @@ class Requepl(cmd.Cmd):
         head <url>
 
         Synchronously HEAD url in relation to the session's host.
+        You will be prompted to follow redirects.
         """
-        return self.session.head(url)
+        return self.session.head(url, allow_redirects=False)
 
     # def complete_head(self, text, line, begidx, endidx):
     #     return self._http_www_complete(text)
@@ -406,8 +416,9 @@ class Requepl(cmd.Cmd):
         get <url>
 
         Synchronously GET url in relation to the session's host.
+        You will be prompted to follow redirects.
         """
-        return self.session.get(url)
+        return self.session.get(url, allow_redirects=False)
 
     # def complete_get(self, text, line, begidx, endidx):
     #     return self._http_www_complete(text)
@@ -501,10 +512,11 @@ class Requepl(cmd.Cmd):
         """
         return True
 
-    # def do_EOF(self, line):
-    #     """Exit the repl.
-    #     """
-    #     return True
+    def do_EOF(self, line):
+        """Exit the repl.
+        """
+        print ''
+        return True
 
 if __name__ == '__main__':
     try:

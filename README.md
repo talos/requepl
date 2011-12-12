@@ -196,6 +196,13 @@ Drop into other sessions automatically when you destroy one.
 
 ## Versions
 
+0.0.10 :
+
+      - doesn't follow redirects by default.  you are prompted instead.
+      - better readline detection for macosx.  if tab-complete doesn't work on your system, let me know!
+      - EOF breaks you out as it should
+      - interrupt breaks a request if you're making one, but doesn't break out of the repl entirely.
+
 0.0.9 :
 
       - simpler, better session handling
