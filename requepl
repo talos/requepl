@@ -30,6 +30,7 @@ import sys
 import ast
 import pprint
 import readline
+import platform
 
 REQUEST_HEADERS = [
     'Accept',
@@ -105,7 +106,7 @@ def safe_request(func):
                     if response.headers.has_key('location'):
                         url = response.headers['location']
                         follow = raw_input("Follow redirect to '%s'? Y/n > " % url)
-                        if len(follow) and (follow[0] == 'n' or follow[1] == 'N'):
+                        if follow and (follow[0] == 'n' or follow[0] == 'N'):
                             break      # break out early
                     else:
                         print "No location header from 3xx response, can't follow."
@@ -138,13 +139,16 @@ class Requepl(cmd.Cmd):
     def preloop(self):
         """Initialize default session.
         """
+        
         # OS X Lion whyyyy
-        if 'libedit' in readline.__doc__ or sys.platform == 'darwin':
+        if platform.python_branch().startswith('tags/') and ('libedit' in readline.__doc__ or sys.platform == 'darwin'):
             self.completekey = None # disable cmd.Cmd's default
                                     # complete binding
             self.old_completer = readline.get_completer()
             readline.set_completer(self.complete)
             readline.parse_and_bind("bind ^I rl_complete")
+        else:
+            readline.parse_and_bind("tab: rl_complete")
 
         self.do_session(DEFAULT_HOST)
 

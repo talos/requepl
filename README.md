@@ -9,7 +9,7 @@ Wraps the Python [Requests](http://pypi.python.org/pypi/requests) library.
 From source:
 
 ```bash
-    $ git clone https://talos@github.com/talos/requepl.git
+    $ git clone https://github.com/talos/requepl.git
     $ cd requepl
     $ python setup.py install
 ```
