@@ -13,7 +13,7 @@ except ImportError:
 
 setup(name='requepl',
       license='GPLv3',
-      version='0.0.10',
+      version='0.0.11',
       description='HTTP REPL with multiple sessions.',
       author='John Krauss',
       author_email='irving.krauss@gmail.com',

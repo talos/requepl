@@ -196,6 +196,11 @@ Drop into other sessions automatically when you destroy one.
 
 ## Versions
 
+0.0.11 :
+
+      - better readline check for mac
+      - correctly handles user input following headers
+
 0.0.10 :
 
       - doesn't follow redirects by default.  you are prompted instead.
