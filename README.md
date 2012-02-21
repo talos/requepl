@@ -196,6 +196,9 @@ Drop into other sessions automatically when you destroy one.
 
 ## Versions
 
+0.0.12 :
+      - fixing line ending issue
+
 0.0.11 :
 
       - better readline check for mac
