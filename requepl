@@ -139,7 +139,7 @@ class Requepl(cmd.Cmd):
     def preloop(self):
         """Initialize default session.
         """
-        
+
         # OS X Lion whyyyy
         if platform.python_branch().startswith('tags/') and ('libedit' in readline.__doc__ or sys.platform == 'darwin'):
             self.completekey = None # disable cmd.Cmd's default
